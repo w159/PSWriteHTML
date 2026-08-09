@@ -75,6 +75,12 @@ function Email {
     .PARAMETER OutputHTML
     Switch parameter to output the email content as HTML.
 
+    .PARAMETER UseMailozaurr
+    Sends through Mailozaurr's Send-EmailMessage command when requested. Mailozaurr is resolved at runtime and is not a required PSWriteHTML dependency.
+
+    .PARAMETER MailozaurrParameters
+    Optional provider, authentication, retry, and transport parameters passed to Send-EmailMessage. Explicit values override parameters mapped from Email.
+
     .PARAMETER WhatIf
     Switch parameter to show what would happen without actually sending the email.
 
@@ -105,6 +111,8 @@ function Email {
         [alias('Supress')][bool] $Suppress = $true,
         [switch] $Online,
         [switch] $OutputHTML,
+        [switch] $UseMailozaurr,
+        [System.Collections.IDictionary] $MailozaurrParameters,
         [switch] $WhatIf
     )
     $Script:EmailSchema = [ordered]@{}
@@ -218,7 +226,11 @@ function Email {
     }
 
     #$MailSentTo = "To: $($ServerParameters.To -join ', '); CC: $($ServerParameters.CC -join ', '); BCC: $($ServerParameters.BCC -join ', ')".Trim()
-    $EmailOutput = Send-Email -EmailParameters $ServerParameters -Body $Body -Attachment $Attachments -WhatIf:$WhatIf
+    if ($UseMailozaurr) {
+        $EmailOutput = Invoke-PSWriteHTMLMailozaurr -EmailParameters $ServerParameters -Body $Body -Attachment $Attachments -AdditionalParameters $MailozaurrParameters -WhatIf:$WhatIf
+    } else {
+        $EmailOutput = Send-Email -EmailParameters $ServerParameters -Body $Body -Attachment $Attachments -WhatIf:$WhatIf
+    }
     if (-not $Suppress) {
         $EmailOutput
     }
